@@ -1,80 +1,432 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Artemis II Full Media Downloader v2.0</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #0a0a0a; color: #fff; }
-        button { background: linear-gradient(45deg, #ff4500, #ff8c00); color: white; border: none; padding: 15px 30px; font-size: 20px; cursor: pointer; border-radius: 8px; margin: 10px; }
-        button:hover { background: linear-gradient(45deg, #e03e00, #ff7f00); }
-        #status { font-size: 18px; margin: 20px 0; }
-        .gallery { margin: 20px 0; border: 1px solid #444; padding: 15px; border-radius: 8px; }
-        img, video { max-width: 100%; height: auto; cursor: pointer; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Artemis II Multimedia Downloader</title>
+  <style>
+    :root {
+      --bg: #090909;
+      --panel: #141414;
+      --panel2: #1d1d1d;
+      --text: #f4f4f4;
+      --muted: #a8a8a8;
+      --accent: #ff7a18;
+      --accent2: #ff4d4d;
+      --line: #2b2b2b;
+      --good: #35d07f;
+      --warn: #ffcc66;
+      --bad: #ff6b6b;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      line-height: 1.2;
+    }
+
+    .sub {
+      color: var(--muted);
+      margin-bottom: 16px;
+      line-height: 1.4;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      color: white;
+      background: linear-gradient(45deg, var(--accent2), var(--accent));
+      box-shadow: 0 8px 20px rgba(0,0,0,.25);
+    }
+
+    button.secondary {
+      background: linear-gradient(45deg, #3d3d3d, #666);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+      margin: 14px 0 18px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .card .label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    .card .value {
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .status {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 16px;
+      white-space: pre-wrap;
+      line-height: 1.45;
+    }
+
+    .lists {
+      display: grid;
+      grid-template-columns: 1.4fr .9fr;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .listbox {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      min-height: 180px;
+      max-height: 260px;
+      overflow: auto;
+    }
+
+    .listbox h2 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    .item {
+      padding: 8px 0;
+      border-bottom: 1px solid #242424;
+      color: #ddd;
+      font-size: 14px;
+      word-break: break-all;
+    }
+
+    .item:last-child { border-bottom: 0; }
+
+    .gallery-title {
+      margin: 18px 0 10px;
+      font-size: 18px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .media {
+      background: #111;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .media img, .media video {
+      width: 100%;
+      display: block;
+      max-height: 220px;
+      object-fit: cover;
+      background: #000;
+    }
+
+    .meta {
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .tiny { font-size: 12px; color: var(--muted); }
+    .ok { color: var(--good); }
+    .warn { color: var(--warn); }
+    .bad { color: var(--bad); }
+
+    @media (max-width: 900px) {
+      .lists { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-    <h1>🚀 Artemis II Complete Media (563 Images + 35 Videos)</h1>
-    <button onclick="scrapeAll()">Scrape & Load All Galleries</button>
-    <button onclick="queueAll()">Queue All for Download</button>
-    <div id="status">Ready. Click Scrape first.</div>
-    <div id="media-container"></div>
+  <div class="wrap">
+    <h1>🚀 Artemis II Multimedia Downloader</h1>
+    <div class="sub">
+      Scans page HTML for direct media URLs, handles duplicate detection, and supports the full Artemis II gallery set.
+    </div>
 
-    <script>
-        const GALLERIES = [
-            { name: 'Journey to Moon', url: 'https://www.nasa.gov/gallery/journey-to-the-moon/' },
-            { name: 'SVS Lunar Science', url: 'https://svs.gsfc.nasa.gov/gallery/artemis-iiscience/' },
-            // Add your prior 11: Flickr/nasa2explore, images.nasa.gov, etc.
-            { name: 'Splashdown', urls: ['https://flickr.com/photos/nasa2explore/albums/72177720312345678'] }, // Example; replace with yours
-            // ... (full list from prior code)
-        ];
-        let allMedia = [];
+    <div class="toolbar">
+      <button onclick="scrapeAll()">Scrape & Load All</button>
+      <button class="secondary" onclick="queueAll()">Queue All Downloads</button>
+      <button class="secondary" onclick="clearAll()">Clear</button>
+    </div>
 
-        async function scrapeAll() {
-            document.getElementById('status').innerText = 'Scraping...';
-            allMedia = [];
-            for (let gallery of GALLERIES) {
-                try {
-                    const res = await fetch(gallery.url);
-                    const html = await res.text();
-                    // Parse img/video src with _o.jpg & mp4 priority (use DOMParser for full-res extract)
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    doc.querySelectorAll('img[src*="flickr"], video[src]').forEach(el => {
-                        let src = el.src.replace(/_\w+\.jpg$/, '_o.jpg').replace(/_\w+\.png$/, '_o.png');
-                        if (!src.startsWith('http')) src = 'https://' + src;
-                        allMedia.push({ type: el.tagName, src, gallery: gallery.name });
-                    });
-                    // Handle SVS direct links like 14952_ArtemisII_MarieHenderson_YT.mp4
-                } catch (e) { console.error(e); }
-            }
-            renderMedia();
-            document.getElementById('status').innerText = `Loaded ${allMedia.length} items (expected 598).`;
+    <div class="stats">
+      <div class="card"><div class="label">Galleries</div><div class="value" id="gCount">0</div></div>
+      <div class="card"><div class="label">Declared Images</div><div class="value" id="declImages">0</div></div>
+      <div class="card"><div class="label">Declared Videos</div><div class="value" id="declVideos">0</div></div>
+      <div class="card"><div class="label">Unique Media</div><div class="value" id="uCount">0</div></div>
+      <div class="card"><div class="label">Duplicates</div><div class="value" id="dCount">0</div></div>
+      <div class="card"><div class="label">Errors</div><div class="value" id="eCount">0</div></div>
+    </div>
+
+    <div class="status" id="status">Ready.</div>
+
+    <div class="lists">
+      <div class="listbox">
+        <h2>Gallery Progress</h2>
+        <div id="galleryLog"></div>
+      </div>
+      <div class="listbox">
+        <h2>Sample Matches</h2>
+        <div id="sampleLog"></div>
+      </div>
+    </div>
+
+    <div class="gallery-title">Loaded Media</div>
+    <div class="grid" id="mediaContainer"></div>
+  </div>
+
+  <script>
+    const GALLERIES = [
+      { name: 'Artemis II Splashdown and Return', images: 109, videos: 1, urls: ['https://www.nasa.gov/gallery/artemis-ii-splashdown-and-return/'] },
+      { name: 'Artemis II Return to Earth Gallery', images: 10, videos: 1, urls: ['https://www.nasa.gov/gallery/artemis-ii-return-to-earth-gallery/'] },
+      { name: 'Artemis II Lunar Flyby Gallery', images: 79, videos: 0, urls: ['https://www.nasa.gov/gallery/artemis-ii-lunar-flyby-gallery/'] },
+      { name: 'Artemis II Journey to the Moon Gallery', images: 42, videos: 16, urls: ['https://www.nasa.gov/gallery/journey-to-the-moon/'] },
+      { name: 'Artemis II Launch Gallery', images: 18, videos: 1, urls: ['https://www.nasa.gov/gallery/artemis-ii-launch-gallery/'] },
+      { name: 'Artemis II Astronauts Gallery', images: 113, videos: 0, urls: ['https://www.nasa.gov/gallery/artemis-ii-astronauts-gallery/'] },
+      { name: 'Artemis II Flight Day Highlights Gallery', images: 9, videos: 9, urls: ['https://www.nasa.gov/gallery/artemis-ii-flight-day-highlights-gallery/'] },
+      { name: 'Artemis II Mission Science Gallery', images: 31, videos: 6, urls: ['https://svs.gsfc.nasa.gov/gallery/artemis-iiscience/'] },
+      { name: 'NASA’s Space Launch System Rocket Gallery', images: 100, videos: 0, urls: ['https://www.nasa.gov/gallery/space-launch-system/'] },
+      { name: 'NASA’s Orion Spacecraft Gallery', images: 32, videos: 0, urls: ['https://www.nasa.gov/gallery/orion-spacecraft/'] },
+      { name: 'Ground Systems Gallery', images: 30, videos: 0, urls: ['https://www.nasa.gov/gallery/ground-systems/'] }
+    ];
+
+    let uniqueMedia = [];
+    let duplicateMedia = [];
+    let errorCount = 0;
+    const canonicalSet = new Set();
+
+    const MEDIA_RE = /https?:\/\/[^\s"'<>\\)]+?\.(?:jpg|jpeg|png|webp|gif|bmp|mp4|mov|m4v)(?:\?[^\s"'<>\\)]*)?/ig;
+    const ATTR_RE = /\b(?:src|href|data-src|data-lazy-src|data-original|data-full|poster|content|srcset)\s*=\s*["']([^"']+)["']/ig;
+
+    function normalizeUrl(url) {
+      if (!url) return '';
+      let u = url.trim().replace(/&amp;/g, '&').replace(/^\/\//, 'https://');
+      return u;
+    }
+
+    function canonicalize(url) {
+      let u = normalizeUrl(url);
+      u = u.split('#')[0].split('?')[0];
+      u = u.replace(/_\d+x\d+(?=\.(jpg|jpeg|png|webp|gif)$/i), '');
+      u = u.replace(/_(?:c|b|n|m|z|k|h|o)(?=\.(jpg|jpeg|png|webp|gif)$/i), '');
+      u = u.replace(/_(?:thumb|small|medium|large)(?=\.(jpg|jpeg|png|webp|gif)$/i), '');
+      return u;
+    }
+
+    function toFullRes(url) {
+      let u = normalizeUrl(url);
+      u = u.replace(/_(?:c|b|n|m|z|k|h)(\.(?:jpg|jpeg|png|webp|gif))$/i, '_o$1');
+      u = u.replace(/(\.(?:jpg|jpeg|png|webp|gif))$/i, '_o$1');
+      return u;
+    }
+
+    function addMedia(url, type, gallery, source) {
+      const full = toFullRes(url);
+      const canon = canonicalize(full);
+      if (!canon) return false;
+      if (canonicalSet.has(canon)) {
+        duplicateMedia.push({ type, url: full, canon, gallery, source });
+        return false;
+      }
+      canonicalSet.add(canon);
+      uniqueMedia.push({ type, url: full, canon, gallery, source });
+      return true;
+    }
+
+    function extractFromSrcset(value) {
+      return value.split(',').map(s => s.trim().split(' ')[0]).filter(Boolean).map(normalizeUrl);
+    }
+
+    function scanHtml(html, galleryName, sourceUrl) {
+      let m;
+      while ((m = MEDIA_RE.exec(html)) !== null) {
+        const url = normalizeUrl(m[0]);
+        if (/\.(jpg|jpeg|png|webp|gif|bmp|mp4|mov|m4v)(\?|$)/i.test(url)) {
+          const type = /\.(mp4|mov|m4v)(\?|$)/i.test(url) ? 'video' : 'image';
+          addMedia(url, type, galleryName, sourceUrl);
         }
+      }
+      while ((m = ATTR_RE.exec(html)) !== null) {
+        const val = m[1];
+        const items = val.includes(',') ? extractFromSrcset(val) : [normalizeUrl(val)];
+        items.forEach(url => {
+          if (/\.(jpg|jpeg|png|webp|gif|bmp|mp4|mov|m4v)(\?|$)/i.test(url)) {
+            const type = /\.(mp4|mov|m4v)(\?|$)/i.test(url) ? 'video' : 'image';
+            addMedia(url, type, galleryName, sourceUrl);
+          }
+        });
+      }
+    }
 
-        function renderMedia() {
-            const container = document.getElementById('media-container');
-            container.innerHTML = allMedia.map(m => 
-                m.type === 'IMG' ? `<img src="${m.src}" alt="${m.gallery}" onload="checkLoaded(this)">` :
-                `<video src="${m.src}" controls preload="metadata"></video>`
-            ).join('');
-        }
+    async function fetchText(url) {
+      const res = await fetch(url, { mode: 'cors', credentials: 'omit' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.text();
+    }
 
-        function queueAll() {
-            allMedia.forEach(m => {
-                const link = document.createElement('a');
-                link.href = m.src;
-                link.download = m.src.split('/').pop();
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            });
-            document.getElementById('status').innerText = 'All queued! Check Downloads/Photos.';
-        }
+    function updateStats() {
+      document.getElementById('gCount').textContent = GALLERIES.length;
+      document.getElementById('declImages').textContent = GALLERIES.reduce((a, g) => a + (g.images || 0), 0);
+      document.getElementById('declVideos').textContent = GALLERIES.reduce((a, g) => a + (g.videos || 0), 0);
+      document.getElementById('uCount').textContent = uniqueMedia.length;
+      document.getElementById('dCount').textContent = duplicateMedia.length;
+      document.getElementById('eCount').textContent = errorCount;
+    }
 
-        function checkLoaded(img) {
-            if (img.naturalWidth === 0) { img.src = img.src.replace(/_m\./, '_o.'); } // Retry hi-res
+    function setStatus(text) {
+      document.getElementById('status').textContent = text;
+    }
+
+    function updateGalleryLog(text) {
+      const box = document.getElementById('galleryLog');
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.textContent = text;
+      box.prepend(div);
+    }
+
+    function updateSampleLog() {
+      const box = document.getElementById('sampleLog');
+      const latest = uniqueMedia.slice(-8).reverse();
+      box.innerHTML = latest.map(m =>
+        `<div class="item">${escapeHtml(m.type)} — ${escapeHtml(m.gallery)}<br>${escapeHtml(m.url)}</div>`
+      ).join('');
+    }
+
+    function renderMedia() {
+      const box = document.getElementById('mediaContainer');
+      box.innerHTML = uniqueMedia.map((m, idx) => {
+        const safe = escapeHtml(m.url);
+        if (m.type === 'video') {
+          return `<div class="media"><video controls preload="metadata" src="${safe}"></video><div class="meta"><div><strong>#${idx + 1}</strong> video</div><div>${escapeHtml(m.gallery)}</div><div class="tiny">${safe}</div></div></div>`;
         }
-    </script>
+        return `<div class="media"><img src="${safe}" alt="${escapeHtml(m.gallery)}" loading="lazy"><div class="meta"><div><strong>#${idx + 1}</strong> image</div><div>${escapeHtml(m.gallery)}</div><div class="tiny">${safe}</div></div></div>`;
+      }).join('');
+    }
+
+    async function scrapeAll() {
+      uniqueMedia = [];
+      duplicateMedia = [];
+      canonicalSet.clear();
+      errorCount = 0;
+      document.getElementById('galleryLog').innerHTML = '';
+      document.getElementById('sampleLog').innerHTML = '';
+      document.getElementById('mediaContainer').innerHTML = '';
+      updateStats();
+      setStatus('Starting scrape...');
+
+      for (let i = 0; i < GALLERIES.length; i++) {
+        const g = GALLERIES[i];
+        updateGalleryLog(`Scraping ${i + 1}/${GALLERIES.length}: ${g.name}`);
+        for (const url of g.urls) {
+          try {
+            const html = await fetchText(url);
+            scanHtml(html, g.name, url);
+            updateSampleLog();
+            updateStats();
+            setStatus(`Scraped ${g.name}\nDeclared: ${g.images || 0} images, ${g.videos || 0} videos\nFound so far: ${uniqueMedia.length} unique, ${duplicateMedia.length} duplicates`);
+          } catch (err) {
+            errorCount++;
+            updateStats();
+            updateGalleryLog(`Failed: ${g.name} — ${url} — ${err.message}`);
+          }
+        }
+      }
+
+      renderMedia();
+      updateStats();
+      setStatus(`Done.\nDeclared totals: ${GALLERIES.reduce((a, g) => a + (g.images || 0), 0)} images, ${GALLERIES.reduce((a, g) => a + (g.videos || 0), 0)} videos\nUnique media found: ${uniqueMedia.length}\nDuplicates detected: ${duplicateMedia.length}\nErrors: ${errorCount}\nIf counts are still low, the site likely requires a proxy or server-side scraping.`);
+    }
+
+    function queueAll() {
+      if (!uniqueMedia.length) {
+        setStatus('No media loaded yet.');
+        return;
+      }
+      let queued = 0;
+      uniqueMedia.forEach((m, i) => {
+        const a = document.createElement('a');
+        a.href = m.url;
+        a.download = m.url.split('/').pop().split('?')[0] || `media-${i + 1}`;
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        queued++;
+      });
+      setStatus(`Queued ${queued} files. Some browsers may limit automatic downloads.`);
+    }
+
+    function clearAll() {
+      uniqueMedia = [];
+      duplicateMedia = [];
+      canonicalSet.clear();
+      errorCount = 0;
+      document.getElementById('galleryLog').innerHTML = '';
+      document.getElementById('sampleLog').innerHTML = '';
+      document.getElementById('mediaContainer').innerHTML = '';
+      updateStats();
+      setStatus('Cleared.');
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    updateStats();
+  </script>
 </body>
 </html>
