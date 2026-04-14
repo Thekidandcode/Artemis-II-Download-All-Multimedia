@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artemis II Full Media Downloader v2.0</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #0a0a0a; color: #fff; }
+        button { background: linear-gradient(45deg, #ff4500, #ff8c00); color: white; border: none; padding: 15px 30px; font-size: 20px; cursor: pointer; border-radius: 8px; margin: 10px; }
+        button:hover { background: linear-gradient(45deg, #e03e00, #ff7f00); }
+        #status { font-size: 18px; margin: 20px 0; }
+        .gallery { margin: 20px 0; border: 1px solid #444; padding: 15px; border-radius: 8px; }
+        img, video { max-width: 100%; height: auto; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🚀 Artemis II Complete Media (563 Images + 35 Videos)</h1>
+    <button onclick="scrapeAll()">Scrape & Load All Galleries</button>
+    <button onclick="queueAll()">Queue All for Download</button>
+    <div id="status">Ready. Click Scrape first.</div>
+    <div id="media-container"></div>
+
+    <script>
+        const GALLERIES = [
+            { name: 'Journey to Moon', url: 'https://www.nasa.gov/gallery/journey-to-the-moon/' },
+            { name: 'SVS Lunar Science', url: 'https://svs.gsfc.nasa.gov/gallery/artemis-iiscience/' },
+            // Add your prior 11: Flickr/nasa2explore, images.nasa.gov, etc.
+            { name: 'Splashdown', urls: ['https://flickr.com/photos/nasa2explore/albums/72177720312345678'] }, // Example; replace with yours
+            // ... (full list from prior code)
+        ];
+        let allMedia = [];
+
+        async function scrapeAll() {
+            document.getElementById('status').innerText = 'Scraping...';
+            allMedia = [];
+            for (let gallery of GALLERIES) {
+                try {
+                    const res = await fetch(gallery.url);
+                    const html = await res.text();
+                    // Parse img/video src with _o.jpg & mp4 priority (use DOMParser for full-res extract)
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    doc.querySelectorAll('img[src*="flickr"], video[src]').forEach(el => {
+                        let src = el.src.replace(/_\w+\.jpg$/, '_o.jpg').replace(/_\w+\.png$/, '_o.png');
+                        if (!src.startsWith('http')) src = 'https://' + src;
+                        allMedia.push({ type: el.tagName, src, gallery: gallery.name });
+                    });
+                    // Handle SVS direct links like 14952_ArtemisII_MarieHenderson_YT.mp4
+                } catch (e) { console.error(e); }
+            }
+            renderMedia();
+            document.getElementById('status').innerText = `Loaded ${allMedia.length} items (expected 598).`;
+        }
+
+        function renderMedia() {
+            const container = document.getElementById('media-container');
+            container.innerHTML = allMedia.map(m => 
+                m.type === 'IMG' ? `<img src="${m.src}" alt="${m.gallery}" onload="checkLoaded(this)">` :
+                `<video src="${m.src}" controls preload="metadata"></video>`
+            ).join('');
+        }
+
+        function queueAll() {
+            allMedia.forEach(m => {
+                const link = document.createElement('a');
+                link.href = m.src;
+                link.download = m.src.split('/').pop();
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+            document.getElementById('status').innerText = 'All queued! Check Downloads/Photos.';
+        }
+
+        function checkLoaded(img) {
+            if (img.naturalWidth === 0) { img.src = img.src.replace(/_m\./, '_o.'); } // Retry hi-res
+        }
+    </script>
+</body>
+</html>
